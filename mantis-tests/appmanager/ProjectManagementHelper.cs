@@ -25,12 +25,12 @@ namespace mantis_tests
             driver.FindElement(By.XPath("//tbody/tr[1]/td[1]/a[" + index +"]")).Click();
         }
 
-        public void OpenProjectByName(ProjectData project)
+        public void OpenProjectByName(Mantis.ProjectData project)
         {
-            driver.FindElement(By.XPath("//tbody/tr[1]/td[1]/a[contains(text()," + project.Name +")]")).Click();
+            driver.FindElement(By.XPath("//tbody/tr[1]/td[1]/a[contains(text()," + project.name +")]")).Click();
         }
 
-        public void DeleteProject(ProjectData project)
+        public void DeleteProject(Mantis.ProjectData project)
         {
             OpenProjectByName(project);
             driver.FindElement(By.XPath("//input[@value='Delete Project']")).Click();
@@ -53,7 +53,7 @@ namespace mantis_tests
             if (projectCache == null)
             {
                 projectCache = new List<ProjectData>();
-                ICollection<IWebElement> elements = driver.FindElements(By.CssSelector("//div[@class='table - responsive']//tbody//tr//a"));
+                ICollection<IWebElement> elements = driver.FindElements(By.XPath("//div[@class='table - responsive']//tbody//tr//a"));
                 foreach (IWebElement element in elements)
                 {
                     projectCache.Add(new ProjectData(element.Text)
@@ -81,12 +81,45 @@ namespace mantis_tests
             return IsElementPresent(By.PartialLinkText("manage_proj_edit_page.php"));
         }
 
-        public ProjectManagementHelper Remove(ProjectData project)
+        public ProjectManagementHelper CheckSpecificProjectCreateIfNot(ProjectData project, AccountData account)
+        {
+            if (!IsSpecificProjectExist(project, account))
+            {
+                Mantis.ProjectData projectNew = new Mantis.ProjectData() { name = "project to delete" };
+                Mantis.MantisConnectPortTypeClient client = new Mantis.MantisConnectPortTypeClient();
+                client.mc_project_add(account.Name, account.Password, projectNew);
+            }
+            return this;
+        }
+
+        public bool IsSpecificProjectExist(ProjectData project, AccountData account)
+        {
+            mantis_tests.Mantis.ProjectData[] allProjects = manager.API.GetAllProjects(account);
+            foreach (Mantis.ProjectData element in allProjects)
+            {
+                return IsElementPresent(By.Name(project.Name));
+            }
+            return false;
+        }
+
+        public ProjectManagementHelper Remove(Mantis.ProjectData project)
         {
             manager.menuHelper.OpenProjectMenu();
             DeleteProject(project);
             manager.menuHelper.OpenProjectMenu();
             return this;
+        }
+
+        public int GetIndexOfProject(Mantis.ProjectData[] allProjects, ProjectData project)
+        {
+            for (int i = 0; i < allProjects.Length; i++)
+            {
+                if (IsElementPresent(By.Id(project.Id)))
+                {
+                    return i;
+                }
+            }
+            throw new System.Exception("Project is not found!");
         }
     }
 }

@@ -13,6 +13,7 @@ namespace mantis_tests
         public bool InheritGlobalCategories { get; set; }
         public bool StatusVisibility { get; set; }
         public string Description { get; set; }
+        public string Id { get; set; }
 
         public ProjectData(string name)
         {

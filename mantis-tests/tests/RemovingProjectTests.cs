@@ -12,22 +12,39 @@ namespace mantis_tests
         [Test]
         public void ProjectRemovalTest()
         {
-            applicationManager.projectHelper.CheckExistngCreateIfNot();
+            ProjectData specificProject = new ProjectData()
+            {
+                Name = "project to delete",
+            };
 
-            List<ProjectData> oldProjects = applicationManager.projectHelper.GetProjectList();
-            ProjectData forRemoving = oldProjects[0];
+            AccountData account = new AccountData()
+            {
+                Name = "administrator",
+                Password = "root"
+            };
+
+            applicationManager.projectHelper.CheckSpecificProjectCreateIfNot(specificProject, account);
+
+            Mantis.ProjectData[] oldProjects = applicationManager.API.GetAllProjects(account);
+            int index = applicationManager.projectHelper.GetIndexOfProject(oldProjects, specificProject);
+            Mantis.ProjectData forRemoving = oldProjects[index];
 
             applicationManager.projectHelper.Remove(forRemoving);
-            Assert.AreEqual(oldProjects.Count - 1, applicationManager.projectHelper.GetProjectCount());
 
-            List<ProjectData> newProjects = applicationManager.projectHelper.GetProjectList();
+            Assert.AreEqual(oldProjects.Length - 1, applicationManager.API.GetAllProjects(account).Length);
 
-            oldProjects.RemoveAt(0);
-            Assert.AreEqual(oldProjects, newProjects);
+            Mantis.ProjectData[] newProjects = applicationManager.API.GetAllProjects(account);
 
-            foreach (ProjectData group in newProjects)
+            var oldList = oldProjects.ToList();
+            oldList.RemoveAt(index);
+
+            var newList = newProjects.ToList();
+
+            Assert.AreEqual(oldList, newList);
+
+            foreach (Mantis.ProjectData project in newProjects)
             {
-                Assert.AreNotEqual(group, forRemoving);
+                Assert.AreNotEqual(project, forRemoving);
             }
         }
     }
